@@ -3,6 +3,7 @@ version: '3.7'
 services:
   db:
     image: postgres:13
+    user: root
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
@@ -14,6 +15,7 @@ services:
 
   odoo:
     image: odoo:17.0
+    user: root
     depends_on:
       - db
     ports:
