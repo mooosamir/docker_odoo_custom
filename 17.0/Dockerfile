@@ -99,6 +99,12 @@ COPY wait-for-psql.py /usr/local/bin/wait-for-psql.py
 
 # Set default user when running the container
 USER odoo
+# Install JupyterLab
+RUN pip3 install jupyterlab
+EXPOSE 8888
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["odoo"]
+# Add JupyterLab to entrypoint
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--no-browser", "--allow-root", "&", "odoo"]
+
+#ENTRYPOINT ["/entrypoint.sh"]
+#CMD ["odoo"]
