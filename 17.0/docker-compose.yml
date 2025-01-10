@@ -14,7 +14,7 @@ services:
       - odoo-network
 
   odoo:
-    image: odoo:17.0
+    image: odoo-jupyter
     user: root
     depends_on:
       - db
