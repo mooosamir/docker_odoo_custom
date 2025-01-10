@@ -9,8 +9,7 @@ ENV LANG en_US.UTF-8
 # Retrieve the target architecture to install the correct wkhtmltopdf package
 ARG TARGETARCH
 
-# Install some deps, lessc and less-plugin-clean-css, and wkhtmltopdf
-
+# Install dependencies
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive \
     apt-get install -y --no-install-recommends \
@@ -52,7 +51,7 @@ RUN apt-get update && \
     && apt-get install -y --no-install-recommends ./wkhtmltox.deb \
     && rm -rf /var/lib/apt/lists/* wkhtmltox.deb
 
-# install latest postgresql-client
+# Install PostgreSQL client
 RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
     && GNUPGHOME="$(mktemp -d)" \
     && export GNUPGHOME \
@@ -66,7 +65,7 @@ RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main' > /etc/a
     && rm -f /etc/apt/sources.list.d/pgdg.list \
     && rm -rf /var/lib/apt/lists/*
 
-# Install rtlcss (on Debian buster)
+# Install rtlcss
 RUN npm install -g rtlcss
 
 # Install Odoo
@@ -79,6 +78,9 @@ RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/od
     && apt-get -y install --no-install-recommends ./odoo.deb \
     && rm -rf /var/lib/apt/lists/* odoo.deb
 
+# Install JupyterLab
+RUN pip3 install jupyterlab
+
 # Copy entrypoint script and Odoo configuration file
 COPY ./entrypoint.sh /
 COPY ./odoo.conf /etc/odoo/
@@ -89,22 +91,18 @@ RUN chown odoo /etc/odoo/odoo.conf \
     && chown -R odoo /mnt/extra-addons
 VOLUME ["/var/lib/odoo", "/mnt/extra-addons"]
 
-# Expose Odoo services
-EXPOSE 8069 8071 8072
+# Expose ports
+EXPOSE 8069 8071 8072 8888
 
-# Set the default config file
+# Set default config file
 ENV ODOO_RC /etc/odoo/odoo.conf
 
-COPY wait-for-psql.py /usr/local/bin/wait-for-psql.py
+# Create script to run both Odoo and JupyterLab
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Set default user when running the container
+# Set default user
 USER odoo
-# Install JupyterLab
-RUN pip3 install jupyterlab
-EXPOSE 8888
 
-# Add JupyterLab to entrypoint
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--no-browser", "--allow-root", "&", "odoo"]
-
-#ENTRYPOINT ["/entrypoint.sh"]
-#CMD ["odoo"]
+# Start both services
+ENTRYPOINT ["/start.sh"]
